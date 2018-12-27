@@ -1,0 +1,52 @@
+<!doctype html>
+<html>
+
+<head>
+  <title>jsRecorder App</title>
+  <style>
+    html,
+    body {
+      margin: 0;
+      height: 100%;
+      width: 100%;
+    }
+
+    video {
+      height: 100%;
+      width: 100%;
+    }
+  </style>
+</head>
+
+<body>
+  <div>
+    <video />
+  </div>
+  <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+  <script>
+    (() => {
+      const url = "/cameras/cam1/index.m3u8";
+      const video = document.querySelector("video");
+
+      if (Hls.isSupported()) {
+        const hls = new Hls();
+        hls.loadSource(url);
+        hls.attachMedia(video);
+        hls.on(Hls.Events.MANIFEST_PARSED, () => {
+          video.play();
+        });
+      } else if (video.canPlayType("application/vnd.apple.mpegurl")) {
+        video.src = url;
+        video.addEventListener("loadedmetadata", () => {
+          video.play();
+        });
+      }
+
+      video.addEventListener("click", () => {
+        video.play();
+      });
+    })();
+  </script>
+</body>
+
+</html>
