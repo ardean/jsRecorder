@@ -1,8 +1,11 @@
 "use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
-const moment = require("moment");
-const Camera_1 = require("./Camera");
-const FolderStorage_1 = require("./storages/FolderStorage");
+const moment_1 = __importDefault(require("moment"));
+const Camera_1 = __importDefault(require("./Camera"));
+const FolderStorage_1 = __importDefault(require("./storages/FolderStorage"));
 class Recorder {
     constructor(cameraOptions, storageOptions = [""]) {
         this.cameraOptions = cameraOptions;
@@ -33,7 +36,7 @@ class Recorder {
         }
     }
     storeCameraStream(camera, stream) {
-        const date = moment().toDate();
+        const date = moment_1.default().toDate();
         const entry = { date, stream };
         for (const storage of this.storages) {
             storage.store(camera, entry);

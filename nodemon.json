@@ -3,5 +3,5 @@
     "src"
   ],
   "ext": "ts",
-  "exec": "ts-node src/CLI"
+  "exec": "ts-node src"
 }

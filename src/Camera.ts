@@ -1,5 +1,6 @@
-import * as path from "path";
-import FFMPEG, { OutputFormat } from "./FFMPEG";
+import path from "path";
+import * as configService from "./services/config";
+import FFMPEG, { OutputFormat, TransportType } from "./FFMPEG";
 
 const openSansPath = path.resolve(
   path.dirname(require.resolve("npm-font-open-sans/package.json")),
@@ -11,13 +12,15 @@ export interface CameraOptions {
   url: string;
   name?: string;
   disableAudio?: boolean;
+  transportType?: TransportType;
 }
 
 export default class Camera {
   id: string;
-  name?: string;
   url: string;
-  disableAudio: boolean;
+  name?: string;
+  disableAudio?: boolean;
+  transportType?: TransportType;
 
   ffmpegMotion: FFMPEG;
   ffmpegHLS: FFMPEG;
@@ -27,14 +30,17 @@ export default class Camera {
     this.name = options.name;
     this.url = options.url;
     this.disableAudio = options.disableAudio;
+    this.transportType = options.transportType;
   }
 
-  streamMotion(outputFormat: OutputFormat = "mpegts", sensitivity: number = 0.01) {
-    this.ffmpegMotion = new FFMPEG()
-      .inputUrl(this.url)
-      .videoFilter(`select=gt(scene,${sensitivity})`)
-      .videoFilter("setpts=N/(5*TB)");
+  streamMotion(outputFormat: OutputFormat = "mpegts", sensitivity?: number) {
+    this.ffmpegMotion = new FFMPEG({
+      debug: configService.read().environment === "development"
+    })
+      .inputUrl(this.url);
 
+    if (this.transportType) this.ffmpegMotion.transportType(this.transportType);
+    this.applyMotionFilter(this.ffmpegMotion, sensitivity);
     this.applyDisableAudio(this.ffmpegMotion);
     this.applyTimestamp(this.ffmpegMotion);
 
@@ -65,5 +71,11 @@ export default class Camera {
 
   applyDisableAudio(ffmpeg: FFMPEG) {
     if (this.disableAudio) ffmpeg.disableAudio();
+  }
+
+  applyMotionFilter(ffmpeg: FFMPEG, sensitivity: number = 0.01) {
+    ffmpeg
+      .videoFilter(`select=gt(scene,${sensitivity})`)
+      .videoFilter("setpts=N/(5*TB)");
   }
 }

@@ -1,7 +1,7 @@
-import * as fs from "fs";
+import fs from "fs";
+import moment from "moment";
+import mkdirp from "mkdirp";
 import Camera from "../Camera";
-import * as moment from "moment";
-import * as mkdirp from "mkdirp";
 import Storage, { StorageEntry } from "./Storage";
 
 export default class FolderStorage implements Storage {

@@ -1,6 +1,6 @@
-import * as path from "path";
-import * as which from "which";
-import * as mkdirp from "mkdirp";
+import path from "path";
+import which from "which";
+import mkdirp from "mkdirp";
 import { spawn, ChildProcess } from "child_process";
 
 const FFMPEG_PATH = which.sync("ffmpeg", { nothrow: true });
@@ -12,6 +12,8 @@ type SegmentOutputFormat = "hls";
 
 type Input = string | NodeJS.ReadableStream;
 
+export type TransportType = "TCP" | "UDP";
+
 interface Options {
   debug?: boolean;
 }
@@ -20,6 +22,7 @@ export default class FFMPEG {
   private options: Options;
   private inputFormat: InputFormat;
   private input: Input;
+  private transportTypeInput: TransportType;
   private videoFilters: string[] = [];
   private audioFilters: string[] = [];
   private audioDisabled: boolean = false;
@@ -32,6 +35,10 @@ export default class FFMPEG {
   inputUrl(input: string) {
     this.input = input;
     return this;
+  }
+
+  transportType(transportType: TransportType) {
+    this.transportTypeInput = transportType;
   }
 
   inputStream(inputFormat: InputFormat, stream: NodeJS.ReadableStream) {
@@ -59,6 +66,8 @@ export default class FFMPEG {
     const { debug } = this.options;
 
     const inputArgs: string[] = [];
+    if (this.transportTypeInput) inputArgs.push("-rtsp_transport", this.transportTypeInput.toLowerCase());
+
     if (typeof this.input === "string") {
       inputArgs.push(`-i`, this.input);
     } else {
@@ -133,6 +142,6 @@ export default class FFMPEG {
   }
 
   stop() {
-    this.process.kill();
+    this.process.emit("SIGINT");
   }
 }

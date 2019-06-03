@@ -1,4 +1,4 @@
-import * as moment from "moment";
+import moment from "moment";
 import Camera, { CameraOptions } from "./Camera";
 import FolderStorage from "./storages/FolderStorage";
 import Storage, { StorageEntry } from "./storages/Storage";
@@ -7,7 +7,7 @@ export interface RecorderCameraOptions extends CameraOptions {
   livestreamFolder?: string;
 }
 
-type StorageOption = string | Storage;
+export type StorageOption = string | Storage;
 
 export default class Recorder {
   private cameraOptions: RecorderCameraOptions[];

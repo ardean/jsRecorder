@@ -1,20 +1,35 @@
 "use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+var __importStar = (this && this.__importStar) || function (mod) {
+    if (mod && mod.__esModule) return mod;
+    var result = {};
+    if (mod != null) for (var k in mod) if (Object.hasOwnProperty.call(mod, k)) result[k] = mod[k];
+    result["default"] = mod;
+    return result;
+};
 Object.defineProperty(exports, "__esModule", { value: true });
-const path = require("path");
-const FFMPEG_1 = require("./FFMPEG");
-const openSansPath = path.resolve(path.dirname(require.resolve("npm-font-open-sans/package.json")), "fonts/Regular/OpenSans-Regular.ttf");
+const path_1 = __importDefault(require("path"));
+const configService = __importStar(require("./services/config"));
+const FFMPEG_1 = __importDefault(require("./FFMPEG"));
+const openSansPath = path_1.default.resolve(path_1.default.dirname(require.resolve("npm-font-open-sans/package.json")), "fonts/Regular/OpenSans-Regular.ttf");
 class Camera {
     constructor(options) {
         this.id = options.id;
         this.name = options.name;
         this.url = options.url;
         this.disableAudio = options.disableAudio;
+        this.transportType = options.transportType;
     }
-    streamMotion(outputFormat = "mpegts", sensitivity = 0.01) {
-        this.ffmpegMotion = new FFMPEG_1.default()
-            .inputUrl(this.url)
-            .videoFilter(`select=gt(scene,${sensitivity})`)
-            .videoFilter("setpts=N/(5*TB)");
+    streamMotion(outputFormat = "mpegts", sensitivity) {
+        this.ffmpegMotion = new FFMPEG_1.default({
+            debug: configService.read().environment === "development"
+        })
+            .inputUrl(this.url);
+        if (this.transportType)
+            this.ffmpegMotion.transportType(this.transportType);
+        this.applyMotionFilter(this.ffmpegMotion, sensitivity);
         this.applyDisableAudio(this.ffmpegMotion);
         this.applyTimestamp(this.ffmpegMotion);
         return this.ffmpegMotion.outputStream(outputFormat);
@@ -38,6 +53,11 @@ class Camera {
     applyDisableAudio(ffmpeg) {
         if (this.disableAudio)
             ffmpeg.disableAudio();
+    }
+    applyMotionFilter(ffmpeg, sensitivity = 0.01) {
+        ffmpeg
+            .videoFilter(`select=gt(scene,${sensitivity})`)
+            .videoFilter("setpts=N/(5*TB)");
     }
 }
 exports.default = Camera;

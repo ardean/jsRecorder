@@ -1,10 +1,13 @@
 "use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
-const path = require("path");
-const which = require("which");
-const mkdirp = require("mkdirp");
+const path_1 = __importDefault(require("path"));
+const which_1 = __importDefault(require("which"));
+const mkdirp_1 = __importDefault(require("mkdirp"));
 const child_process_1 = require("child_process");
-const FFMPEG_PATH = which.sync("ffmpeg", { nothrow: true });
+const FFMPEG_PATH = which_1.default.sync("ffmpeg", { nothrow: true });
 if (!FFMPEG_PATH)
     throw new Error("FFMPEG_NOT_FOUND");
 class FFMPEG {
@@ -17,6 +20,9 @@ class FFMPEG {
     inputUrl(input) {
         this.input = input;
         return this;
+    }
+    transportType(transportType) {
+        this.transportTypeInput = transportType;
     }
     inputStream(inputFormat, stream) {
         this.inputFormat = inputFormat;
@@ -38,6 +44,8 @@ class FFMPEG {
     run(outputArgs) {
         const { debug } = this.options;
         const inputArgs = [];
+        if (this.transportTypeInput)
+            inputArgs.push("-rtsp_transport", this.transportTypeInput.toLowerCase());
         if (typeof this.input === "string") {
             inputArgs.push(`-i`, this.input);
         }
@@ -78,11 +86,11 @@ class FFMPEG {
         return process;
     }
     outputFolder(outputFormat, folderPath) {
-        mkdirp.sync(folderPath);
+        mkdirp_1.default.sync(folderPath);
         const options = [];
         if (outputFormat === "hls") {
             options.push("-start_number", "0", "-hls_time", "10", "-hls_list_size", "6", "-hls_wrap", "3");
-            folderPath = path.resolve(`${folderPath}/index.m3u8`);
+            folderPath = path_1.default.resolve(`${folderPath}/index.m3u8`);
         }
         return this.run([
             ...options,
@@ -97,7 +105,7 @@ class FFMPEG {
         return this.outputStream(outputFormat).pipe(stream);
     }
     stop() {
-        this.process.kill();
+        this.process.emit("SIGINT");
     }
 }
 exports.default = FFMPEG;

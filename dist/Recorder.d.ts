@@ -4,7 +4,7 @@ import Storage from "./storages/Storage";
 export interface RecorderCameraOptions extends CameraOptions {
     livestreamFolder?: string;
 }
-declare type StorageOption = string | Storage;
+export declare type StorageOption = string | Storage;
 export default class Recorder {
     private cameraOptions;
     private cameras;
@@ -15,4 +15,3 @@ export default class Recorder {
     stop(): void;
     storeCameraStream(camera: Camera, stream: NodeJS.ReadableStream): void;
 }
-export {};

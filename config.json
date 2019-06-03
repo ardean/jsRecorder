@@ -1,0 +1,14 @@
+{
+  "environment": "development",
+  "cameras": [
+    {
+      "id": "cam1",
+      "url": "rtsp://192.168.1.112:554/11/",
+      "disableAudio": true,
+      "transportType": "TCP"
+    }
+  ],
+  "storageOptions": [
+    "./storage"
+  ]
+}
