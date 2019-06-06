@@ -1,6 +1,7 @@
 import path from "path";
 import which from "which";
 import mkdirp from "mkdirp";
+import logger from "./services/logger";
 import { spawn, ChildProcess } from "child_process";
 
 const FFMPEG_PATH = which.sync("ffmpeg", { nothrow: true });
@@ -68,6 +69,9 @@ export default class FFMPEG {
     const inputArgs: string[] = [];
     if (this.transportTypeInput) inputArgs.push("-rtsp_transport", this.transportTypeInput.toLowerCase());
 
+    inputArgs.push("-stimeout", (10 * 1000 * 1000).toString());
+    if (!debug) inputArgs.push("-loglevel", "error");
+
     if (typeof this.input === "string") {
       inputArgs.push(`-i`, this.input);
     } else {
@@ -95,14 +99,18 @@ export default class FFMPEG {
       ...(this.audioDisabled ? ["-an"] : []),
       ...outputArgs
     ];
-    if (debug) console.log(`${FFMPEG_PATH} ${args.join(" ")}`);
+    if (debug) logger.info(`${FFMPEG_PATH} ${args.join(" ")}`);
 
     const process = spawn(FFMPEG_PATH, args);
     process.on("error", err => {
-      console.error(err);
+      logger.error("FFMPEG:", err);
     });
     process.stderr.on("data", err => {
-      if (debug) console.log(err.toString());
+      if (debug) logger.info("FFMPEG: " + err.toString());
+      else {
+        logger.error("FFMPEG: " + err.toString());
+        this.stop();
+      }
     });
 
     if (typeof this.input !== "string") this.input.pipe(process.stdin);

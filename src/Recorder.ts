@@ -1,4 +1,5 @@
 import moment from "moment";
+import logger from "./services/logger";
 import Camera, { CameraOptions } from "./Camera";
 import FolderStorage from "./storages/FolderStorage";
 import Storage, { StorageEntry } from "./storages/Storage";
@@ -49,6 +50,12 @@ export default class Recorder {
 
   storeCameraStream(camera: Camera, stream: NodeJS.ReadableStream) {
     const date = moment().toDate();
+    stream.once("close", () => {
+      logger.error("camera stream closed!");
+      setTimeout(() => {
+        this.storeCameraStream(camera, camera.streamMotion());
+      }, 30 * 1000);
+    });
     const entry: StorageEntry = { date, stream };
     for (const storage of this.storages) {
       storage.store(camera, entry);
