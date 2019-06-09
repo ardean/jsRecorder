@@ -1,4 +1,5 @@
 import path from "path";
+import logger from "./services/logger";
 import * as configService from "./services/config";
 import FFMPEG, { OutputFormat, TransportType } from "./FFMPEG";
 
@@ -19,8 +20,10 @@ export default class Camera {
   id: string;
   url: string;
   name?: string;
+  retryIndex: number = 0;
   disableAudio?: boolean;
   transportType?: TransportType;
+  mode: "stopped" | "failed" | "streaming" = "stopped";
 
   ffmpegMotion: FFMPEG;
   ffmpegHLS: FFMPEG;
@@ -77,5 +80,20 @@ export default class Camera {
     ffmpeg
       .videoFilter(`select=gt(scene,${sensitivity})`)
       .videoFilter("setpts=N/(5*TB)");
+  }
+
+  nextRetryTimeout() {
+    return Math.min((1.5 * this.retryIndex++) * 30 * 1000, 24 * 60 * 60 * 1000);
+  }
+
+  resetRetryIndex() {
+    if (this.retryIndex !== 0) this.retryIndex = 0;
+  }
+
+  setStreamingMode() {
+    if (this.mode === "streaming") return;
+    this.mode = "streaming";
+    this.resetRetryIndex();
+    logger.info("stream started");
   }
 }

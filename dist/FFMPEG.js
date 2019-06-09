@@ -6,6 +6,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const path_1 = __importDefault(require("path"));
 const which_1 = __importDefault(require("which"));
 const mkdirp_1 = __importDefault(require("mkdirp"));
+const logger_1 = __importDefault(require("./services/logger"));
 const child_process_1 = require("child_process");
 const FFMPEG_PATH = which_1.default.sync("ffmpeg", { nothrow: true });
 if (!FFMPEG_PATH)
@@ -46,6 +47,9 @@ class FFMPEG {
         const inputArgs = [];
         if (this.transportTypeInput)
             inputArgs.push("-rtsp_transport", this.transportTypeInput.toLowerCase());
+        inputArgs.push("-stimeout", (10 * 1000 * 1000).toString());
+        if (!debug)
+            inputArgs.push("-loglevel", "error");
         if (typeof this.input === "string") {
             inputArgs.push(`-i`, this.input);
         }
@@ -71,14 +75,18 @@ class FFMPEG {
             ...outputArgs
         ];
         if (debug)
-            console.log(`${FFMPEG_PATH} ${args.join(" ")}`);
+            logger_1.default.info(`${FFMPEG_PATH} ${args.join(" ")}`);
         const process = child_process_1.spawn(FFMPEG_PATH, args);
         process.on("error", err => {
-            console.error(err);
+            logger_1.default.error("FFMPEG:", err);
         });
         process.stderr.on("data", err => {
             if (debug)
-                console.log(err.toString());
+                logger_1.default.info("FFMPEG: " + err.toString());
+            else {
+                logger_1.default.error("FFMPEG: " + err.toString());
+                this.stop();
+            }
         });
         if (typeof this.input !== "string")
             this.input.pipe(process.stdin);

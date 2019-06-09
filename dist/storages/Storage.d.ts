@@ -7,4 +7,5 @@ export interface StorageEntry {
 export default interface Storage {
     store(camera: Camera, entry: StorageEntry): Promise<void> | void;
     list(camera: Camera): Promise<StorageEntry[]> | StorageEntry[];
+    cleanup(camera: Camera, entry: StorageEntry): Promise<void> | void;
 }

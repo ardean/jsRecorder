@@ -11,11 +11,14 @@ var __importStar = (this && this.__importStar) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const path_1 = __importDefault(require("path"));
+const logger_1 = __importDefault(require("./services/logger"));
 const configService = __importStar(require("./services/config"));
 const FFMPEG_1 = __importDefault(require("./FFMPEG"));
 const openSansPath = path_1.default.resolve(path_1.default.dirname(require.resolve("npm-font-open-sans/package.json")), "fonts/Regular/OpenSans-Regular.ttf");
 class Camera {
     constructor(options) {
+        this.retryIndex = 0;
+        this.mode = "stopped";
         this.id = options.id;
         this.name = options.name;
         this.url = options.url;
@@ -58,6 +61,20 @@ class Camera {
         ffmpeg
             .videoFilter(`select=gt(scene,${sensitivity})`)
             .videoFilter("setpts=N/(5*TB)");
+    }
+    nextRetryTimeout() {
+        return Math.min((1.5 * this.retryIndex++) * 30 * 1000, 24 * 60 * 60 * 1000);
+    }
+    resetRetryIndex() {
+        if (this.retryIndex !== 0)
+            this.retryIndex = 0;
+    }
+    setStreamingMode() {
+        if (this.mode === "streaming")
+            return;
+        this.mode = "streaming";
+        this.resetRetryIndex();
+        logger_1.default.info("stream started");
     }
 }
 exports.default = Camera;

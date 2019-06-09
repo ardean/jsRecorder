@@ -1,4 +1,5 @@
 import fs from "fs";
+import path from "path";
 import moment from "moment";
 import mkdirp from "mkdirp";
 import Camera from "../Camera";
@@ -10,18 +11,27 @@ export default class FolderStorage implements Storage {
   ) { }
 
   store(camera: Camera, entry: StorageEntry) {
-    const { date, stream } = entry;
-    const momentDate = moment(date);
+    const { stream } = entry;
 
-    const cameraFolder = `${this.baseFolder}/${camera.id}`;
-    const folderPath = `${cameraFolder}/${momentDate.format("YYYY-MM-DD")}`;
-    mkdirp.sync(folderPath);
+    const filename = this.getFilename(camera, entry);
+    mkdirp.sync(path.dirname(filename));
+    stream.pipe(fs.createWriteStream(filename));
+  }
 
-    const filePath = `${folderPath}/${momentDate.format("HH-mm-ss")}.mp4`;
-    stream.pipe(fs.createWriteStream(filePath));
+  getFolder(camera: Camera, entry: StorageEntry) {
+    return `${this.baseFolder}/${camera.id}/${moment(entry.date).format("YYYY-MM-DD")}`;
+  }
+
+  getFilename(camera: Camera, entry: StorageEntry) {
+    return `${this.getFolder(camera, entry)}/${moment(entry.date).format("HH-mm-ss")}.mp4`;
   }
 
   list(camera: Camera) {
     return [];
+  }
+
+  cleanup(camera: Camera, entry: StorageEntry) {
+    const filename = this.getFilename(camera, entry);
+    fs.unlinkSync(filename);
   }
 }

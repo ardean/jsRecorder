@@ -1,4 +1,5 @@
 import moment from "moment";
+import through from "through2";
 import logger from "./services/logger";
 import Camera, { CameraOptions } from "./Camera";
 import FolderStorage from "./storages/FolderStorage";
@@ -23,42 +24,70 @@ export default class Recorder {
 
   start() {
     for (const camera of this.cameras) {
-      const stream = camera.streamMotion();
-      this.storeCameraStream(camera, stream);
+      this.startCamera(camera);
+    }
+  }
 
-      const index = this.cameras.indexOf(camera);
-      const cameraOptions = this.cameraOptions[index];
-      if (cameraOptions && cameraOptions.livestreamFolder) {
-        camera.serveHLS(cameraOptions.livestreamFolder);
-      }
+  startCamera(camera: Camera) {
+    const stream = camera.streamMotion();
+
+    const date = moment().toDate();
+    const entry: StorageEntry = { date, stream };
+    this.watchStream(camera, entry);
+    this.storeCameraStream(camera, entry);
+
+    const index = this.cameras.indexOf(camera);
+    const cameraOptions = this.cameraOptions[index];
+    if (cameraOptions && cameraOptions.livestreamFolder) {
+      camera.serveHLS(cameraOptions.livestreamFolder);
     }
   }
 
   restart() {
     for (const camera of this.cameras) {
-      camera.stopMotion();
-      const stream = camera.streamMotion();
-      this.storeCameraStream(camera, stream);
+      this.restartCamera(camera);
     }
+  }
+
+  restartCamera(camera: Camera) {
+    this.stopCamera(camera);
+    this.startCamera(camera);
   }
 
   stop() {
     for (const camera of this.cameras) {
-      camera.stopMotion();
+      this.stopCamera(camera);
     }
   }
 
-  storeCameraStream(camera: Camera, stream: NodeJS.ReadableStream) {
-    const date = moment().toDate();
-    stream.once("close", () => {
+  stopCamera(camera: Camera) {
+    camera.stopMotion();
+  }
+
+  watchStream(camera: Camera, entry: StorageEntry) {
+    entry.stream.once("close", () => {
+      if (camera.mode === "stopped") this.cleanupStorage(camera, entry);
+      camera.mode = "failed";
       logger.error("camera stream closed!");
       setTimeout(() => {
-        this.storeCameraStream(camera, camera.streamMotion());
-      }, 30 * 1000);
+        this.restartCamera(camera);
+      }, camera.nextRetryTimeout());
     });
-    const entry: StorageEntry = { date, stream };
+    entry.stream = entry.stream.pipe(through((chunk, enc, next) => {
+      camera.setStreamingMode();
+      next(null, chunk);
+    }));
+  }
+
+  storeCameraStream(camera: Camera, entry: StorageEntry) {
     for (const storage of this.storages) {
       storage.store(camera, entry);
+    }
+  }
+
+  cleanupStorage(camera: Camera, entry: StorageEntry) {
+    for (const storage of this.storages) {
+      storage.cleanup(camera, entry);
     }
   }
 }

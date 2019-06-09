@@ -11,8 +11,10 @@ export default class Camera {
     id: string;
     url: string;
     name?: string;
+    retryIndex: number;
     disableAudio?: boolean;
     transportType?: TransportType;
+    mode: "stopped" | "failed" | "streaming";
     ffmpegMotion: FFMPEG;
     ffmpegHLS: FFMPEG;
     constructor(options: CameraOptions);
@@ -23,4 +25,7 @@ export default class Camera {
     applyTimestamp(ffmpeg: FFMPEG): void;
     applyDisableAudio(ffmpeg: FFMPEG): void;
     applyMotionFilter(ffmpeg: FFMPEG, sensitivity?: number): void;
+    nextRetryTimeout(): number;
+    resetRetryIndex(): void;
+    setStreamingMode(): void;
 }
