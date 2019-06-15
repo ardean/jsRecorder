@@ -34,7 +34,7 @@ class Camera {
             this.ffmpegMotion.transportType(this.transportType);
         this.applyMotionFilter(this.ffmpegMotion, sensitivity);
         this.applyDisableAudio(this.ffmpegMotion);
-        this.applyTimestamp(this.ffmpegMotion);
+        this.applyTopLeftText(this.ffmpegMotion, `${this.name ? this.name + " / " : ""}%{localtime}`);
         return this.ffmpegMotion.outputStream(outputFormat);
     }
     stopMotion() {
@@ -44,14 +44,14 @@ class Camera {
         this.ffmpegHLS = new FFMPEG_1.default()
             .inputUrl(this.url);
         this.applyDisableAudio(this.ffmpegHLS);
-        this.applyTimestamp(this.ffmpegHLS);
+        this.applyTopLeftText(this.ffmpegHLS, `${this.name ? this.name + " / " : ""}%{localtime}`);
         return this.ffmpegHLS.outputFolder("hls", folderPath);
     }
     stopHLS() {
         this.ffmpegHLS.stop();
     }
-    applyTimestamp(ffmpeg) {
-        ffmpeg.videoFilter(`drawtext=fontfile='${openSansPath}':text=%{localtime}:fontcolor=white@0.8:x=3:y=3:box=1:boxcolor=black:borderw=3`);
+    applyTopLeftText(ffmpeg, text) {
+        ffmpeg.videoFilter(`drawtext=fontfile='${openSansPath}':text='${text}':fontcolor=white@0.8:x=3:y=3:box=1:boxcolor=black:borderw=3`);
     }
     applyDisableAudio(ffmpeg) {
         if (this.disableAudio)

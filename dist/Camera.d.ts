@@ -22,7 +22,7 @@ export default class Camera {
     stopMotion(): void;
     serveHLS(folderPath: string): import("child_process").ChildProcessWithoutNullStreams;
     stopHLS(): void;
-    applyTimestamp(ffmpeg: FFMPEG): void;
+    applyTopLeftText(ffmpeg: FFMPEG, text: string): void;
     applyDisableAudio(ffmpeg: FFMPEG): void;
     applyMotionFilter(ffmpeg: FFMPEG, sensitivity?: number): void;
     nextRetryTimeout(): number;
