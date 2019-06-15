@@ -69,9 +69,12 @@ export default class Recorder {
       if (camera.mode === "stopped") this.cleanupStorage(camera, entry);
       camera.mode = "failed";
       logger.error("camera stream closed!");
+
+      const timeout = camera.nextRetryTimeout();
+      logger.info(`retry in ${(timeout / 1000 / 60).toFixed(1)} minutes`);
       setTimeout(() => {
         this.restartCamera(camera);
-      }, camera.nextRetryTimeout());
+      }, timeout);
     });
     entry.stream = entry.stream.pipe(through((chunk, enc, next) => {
       camera.setStreamingMode();
